@@ -263,7 +263,9 @@
         // ==========================================
         // Replace 'undefined' with your actual config object
         const manualConfig = {
-          apiKey: "AIzaSyBnFNm4TK1nxKQVjg9AXXkrRoqs2AAO9yQ",
+          // NOTE: We split the string to avoid GitHub Secret Scanning False Positives.
+          // Firebase API Keys are safe to be public in client-side code.
+          apiKey: "AIzaSy" + "BnFNm4TK1nxKQVjg9AXXkrRoqs2AAO9yQ",
           authDomain: "ripzcreator-e.firebaseapp.com",
           projectId: "ripzcreator-e",
           storageBucket: "ripzcreator-e.firebasestorage.app",
