@@ -37,6 +37,16 @@
             -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(63, 63, 70, 0.4);
         }
+        
+        /* Input autofill fix for dark mode */
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover, 
+        input:-webkit-autofill:focus, 
+        input:-webkit-autofill:active{
+            -webkit-box-shadow: 0 0 0 30px #09090b inset !important;
+            -webkit-text-fill-color: white !important;
+            transition: background-color 5000s ease-in-out 0s;
+        }
     </style>
 </head>
 <body class="bg-zinc-950 text-zinc-300 font-sans selection:bg-violet-500/30 overflow-hidden">
@@ -58,7 +68,7 @@
             </div>
 
             <div class="w-full max-w-md glass-panel p-8 rounded-3xl shadow-2xl relative z-10">
-                <div class="flex justify-center mb-8">
+                <div class="flex justify-center mb-6">
                    <div class="w-16 h-16 bg-gradient-to-tr from-violet-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-violet-500/30">
                      <i data-lucide="zap" class="text-white fill-current w-8 h-8"></i>
                    </div>
@@ -67,19 +77,47 @@
                 <h1 class="text-3xl font-bold text-center text-white mb-2 tracking-tight">Ripz<span class="text-violet-500">Creator</span></h1>
                 <p class="text-center text-zinc-500 mb-8">The AI Copilot for Anime & Aesthetic Creators</p>
         
+                <!-- Real Auth Form -->
                 <div class="space-y-4">
-                  <button 
-                    onclick="handleLogin()" 
-                    id="login-btn"
-                    class="w-full py-4 bg-white hover:bg-zinc-200 text-black font-bold rounded-xl transition-all flex items-center justify-center gap-3"
-                  >
-                     <span>Get Started</span> <i data-lucide="chevron-right" class="w-5 h-5"></i>
-                  </button>
-                  <p id="login-error" class="text-center text-red-400 text-sm hidden"></p>
-                </div>
-        
-                <div class="mt-8 pt-8 border-t border-zinc-800 text-center">
-                  <p class="text-xs text-zinc-600 uppercase tracking-widest">Powered by Fine-Tuned LLMs</p>
+                    <div>
+                        <input type="email" id="email-input" placeholder="Email Address" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-white placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-violet-600/50 transition-all">
+                    </div>
+                    <div>
+                        <input type="password" id="password-input" placeholder="Password" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-white placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-violet-600/50 transition-all">
+                    </div>
+
+                    <div class="flex gap-3 pt-2">
+                        <button 
+                            onclick="handleEmailAuth('signin')" 
+                            id="signin-btn"
+                            class="flex-1 py-3 bg-white hover:bg-zinc-200 text-black font-bold rounded-xl transition-all"
+                        >
+                            Sign In
+                        </button>
+                        <button 
+                            onclick="handleEmailAuth('signup')" 
+                            id="signup-btn"
+                            class="flex-1 py-3 bg-zinc-800 hover:bg-zinc-700 text-white font-bold rounded-xl transition-all border border-zinc-700"
+                        >
+                            Sign Up
+                        </button>
+                    </div>
+
+                    <div class="relative flex py-2 items-center">
+                        <div class="flex-grow border-t border-zinc-800"></div>
+                        <span class="flex-shrink mx-4 text-zinc-600 text-xs uppercase">Or</span>
+                        <div class="flex-grow border-t border-zinc-800"></div>
+                    </div>
+
+                    <button 
+                        onclick="handleGuestLogin()" 
+                        id="guest-btn"
+                        class="w-full py-3 bg-transparent hover:bg-zinc-800/50 text-zinc-400 font-medium rounded-xl transition-all flex items-center justify-center gap-2 border border-zinc-800 border-dashed"
+                    >
+                        <span>Continue as Guest</span>
+                    </button>
+
+                    <p id="login-error" class="text-center text-red-400 text-sm hidden bg-red-950/30 p-2 rounded-lg border border-red-900/50"></p>
                 </div>
             </div>
         </div>
@@ -120,7 +158,7 @@
                     GU
                   </div>
                   <div class="flex-1 overflow-hidden">
-                    <p class="text-sm font-medium text-white truncate">Creator Mode</p>
+                    <p class="text-sm font-medium text-white truncate" id="user-email">Creator Mode</p>
                     <p id="plan-status" class="text-xs text-zinc-500 truncate">Pro Plan Active</p>
                   </div>
                 </div>
@@ -209,7 +247,15 @@
     <!-- FIREBASE & APP LOGIC -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { 
+            getAuth, 
+            signInWithCustomToken, 
+            signInAnonymously, 
+            createUserWithEmailAndPassword, 
+            signInWithEmailAndPassword, 
+            onAuthStateChanged, 
+            signOut 
+        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         // --- Config & Init ---
@@ -217,13 +263,32 @@
         let user = null;
         let appId = 'ripz-creator-mvp';
         
+        // --- 1. SET YOUR FIREBASE CONFIG HERE IF EXPORTING ---
+        // If you are running this on your own hosting, replace 'undefined' with your config object
+        const manualConfig = undefined; 
+        /* Example:
+        const manualConfig = {
+            apiKey: "AIzaSy...",
+            authDomain: "myapp.firebaseapp.com",
+            projectId: "myapp",
+            storageBucket: "myapp.appspot.com",
+            messagingSenderId: "123...",
+            appId: "1:123..."
+        };
+        */
+
         // Environment handling
         try {
             if (typeof __app_id !== 'undefined') appId = __app_id;
             
-            // Try initialization
-            if (typeof __firebase_config !== 'undefined') {
-                const config = JSON.parse(__firebase_config);
+            // Priority: Manual Config > Environment Config
+            let config = manualConfig;
+            
+            if (!config && typeof __firebase_config !== 'undefined') {
+                config = JSON.parse(__firebase_config);
+            }
+
+            if (config) {
                 app = initializeApp(config);
                 auth = getAuth(app);
                 db = getFirestore(app);
@@ -234,7 +299,6 @@
 
         // --- UI Functions ---
         
-        // Global for button access
         window.toggleSidebar = () => {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('sidebar-overlay');
@@ -242,18 +306,66 @@
             overlay.classList.toggle('hidden');
         };
 
-        window.handleLogin = async () => {
-            const btn = document.getElementById('login-btn');
+        // --- NEW: Email/Password Auth Logic ---
+        window.handleEmailAuth = async (mode) => {
+            const email = document.getElementById('email-input').value;
+            const password = document.getElementById('password-input').value;
+            const errorText = document.getElementById('login-error');
+            const signinBtn = document.getElementById('signin-btn');
+            const signupBtn = document.getElementById('signup-btn');
+
+            if (!email || !password) {
+                errorText.innerText = "Please enter both email and password.";
+                errorText.classList.remove('hidden');
+                return;
+            }
+
+            // Loading state
+            errorText.classList.add('hidden');
+            signinBtn.disabled = true;
+            signupBtn.disabled = true;
+            signinBtn.classList.add('opacity-50');
+            signupBtn.classList.add('opacity-50');
+
+            try {
+                if (!auth) throw new Error("Firebase not configured. Please add keys in code.");
+
+                if (mode === 'signup') {
+                    await createUserWithEmailAndPassword(auth, email, password);
+                } else {
+                    await signInWithEmailAndPassword(auth, email, password);
+                }
+                // onAuthStateChanged will handle the redirect
+            } catch (e) {
+                console.error(e);
+                let msg = e.message;
+                if (e.code === 'auth/invalid-credential') msg = "Invalid email or password.";
+                if (e.code === 'auth/email-already-in-use') msg = "Email already in use.";
+                if (e.code === 'auth/weak-password') msg = "Password is too weak (min 6 chars).";
+                
+                errorText.innerText = msg;
+                errorText.classList.remove('hidden');
+                
+                // Reset buttons
+                signinBtn.disabled = false;
+                signupBtn.disabled = false;
+                signinBtn.classList.remove('opacity-50');
+                signupBtn.classList.remove('opacity-50');
+            }
+        };
+
+        window.handleGuestLogin = async () => {
+            const btn = document.getElementById('guest-btn');
             const errorText = document.getElementById('login-error');
             
-            btn.innerHTML = '<span>Initializing...</span>';
+            btn.innerHTML = '<span>Initializing Guest Mode...</span>';
             btn.disabled = true;
             errorText.classList.add('hidden');
 
             try {
                 if (!auth) {
-                    // Demo mode login
-                    user = { uid: 'demo-user', isAnonymous: true };
+                    // Offline Demo
+                    user = { uid: 'demo-user', isAnonymous: true, email: 'Guest User' };
                     updateAuthUI();
                     return;
                 }
@@ -265,11 +377,10 @@
                 }
             } catch (e) {
                 console.error(e);
-                errorText.innerText = "Login failed. Check console.";
+                errorText.innerText = "Guest login failed. " + e.message;
                 errorText.classList.remove('hidden');
-                btn.innerHTML = '<span>Get Started</span> <i data-lucide="chevron-right" class="w-5 h-5"></i>';
+                btn.innerHTML = '<span>Continue as Guest</span>';
                 btn.disabled = false;
-                lucide.createIcons();
             }
         };
 
@@ -285,8 +396,6 @@
             temp.select();
             document.execCommand("copy");
             document.body.removeChild(temp);
-            
-            // Simple toast could go here
             alert("Copied to clipboard!");
         };
         
@@ -294,7 +403,7 @@
             document.getElementById('topic-input').value = '';
             document.getElementById('results-container').innerHTML = '';
             document.getElementById('results-container').classList.add('hidden');
-            if (window.innerWidth < 768) toggleSidebar(); // Close sidebar on mobile
+            if (window.innerWidth < 768) toggleSidebar(); 
         }
 
         function updateAuthUI() {
@@ -305,7 +414,14 @@
 
             if (user) {
                 loginView.classList.add('hidden');
-                document.getElementById('user-avatar').innerText = user.uid.slice(0, 2).toUpperCase();
+                
+                // Update Avatar
+                let initials = "GU";
+                if (user.email) initials = user.email.slice(0, 2).toUpperCase();
+                else if (user.isAnonymous) initials = "AN";
+                
+                document.getElementById('user-avatar').innerText = initials;
+                document.getElementById('user-email').innerText = user.email || "Guest User";
                 document.getElementById('plan-status').innerText = auth ? "Pro Plan Active" : "Demo Mode";
                 
                 // Load History if DB available
@@ -348,7 +464,6 @@
         }
 
         // --- Logic: Generation ---
-
         window.generateContent = async () => {
             const topic = document.getElementById('topic-input').value.trim();
             const tone = document.getElementById('tone-select').value;
@@ -406,7 +521,6 @@
                 const data = await response.json();
                 const content = JSON.parse(data.candidates[0].content.parts[0].text);
 
-                // Render Results
                 renderResults(content);
                 
                 // Save to DB
@@ -433,8 +547,6 @@
 
         function renderResults(data) {
             const container = document.getElementById('results-container');
-            
-            // Safe helper for copying
             const safeStr = (obj) => JSON.stringify(obj).replace(/"/g, '&quot;');
             const safeTxt = (txt) => txt.replace(/"/g, '&quot;');
 
@@ -527,19 +639,15 @@
         }
 
         // --- Init ---
-        // Auth Listener
         if (auth) {
             onAuthStateChanged(auth, (currentUser) => {
                 user = currentUser;
                 updateAuthUI();
             });
         } else {
-            // Fallback for demo
             document.getElementById('loading-screen').classList.add('hidden');
             document.getElementById('login-view').classList.remove('hidden');
         }
-
-        // Initial Icon Render
         lucide.createIcons();
     </script>
 </body>
