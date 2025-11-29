@@ -26,6 +26,35 @@
             border: 1px solid rgba(63, 63, 70, 0.4);
         }
         
+        /* VFX ANIMATIONS */
+        @keyframes speedLineMove {
+            0% { background-position: 0 0; }
+            100% { background-position: 100% 100%; }
+        }
+        .vfx-speedlines {
+            background: repeating-linear-gradient(90deg, transparent, transparent 50px, rgba(255, 255, 255, 0.1) 50px, rgba(255, 255, 255, 0.1) 52px);
+            animation: speedLineMove 0.2s linear infinite;
+            pointer-events: none;
+        }
+        @keyframes impactPulse {
+            0%, 100% { background-color: transparent; }
+            50% { background-color: rgba(255, 255, 255, 0.2); }
+        }
+        .vfx-impact {
+            animation: impactPulse 0.1s linear infinite;
+            pointer-events: none;
+        }
+        .vfx-aura {
+            box-shadow: inset 0 0 50px 20px rgba(250, 204, 21, 0.3);
+            pointer-events: none;
+        }
+        .vfx-eyes {
+            /* Simulating eye glow center screen */
+            background: radial-gradient(circle at 50% 45%, rgba(220, 38, 38, 0.6) 0%, transparent 10%),
+                        radial-gradient(circle at 55% 45%, rgba(220, 38, 38, 0.6) 0%, transparent 10%);
+            pointer-events: none;
+        }
+        
         input:-webkit-autofill,
         input:-webkit-autofill:hover, 
         input:-webkit-autofill:focus, 
@@ -274,44 +303,38 @@
              <div id="view-scene" class="view-section hidden fade-in">
                 <div class="flex flex-col gap-2 mb-8">
                     <h2 class="text-2xl font-bold text-white">Anime Scene Builder</h2>
-                    <p class="text-zinc-500 text-sm">Generative storytelling. Text to fully animated scene.</p>
+                    <p class="text-zinc-500 text-sm">Generative storytelling. Text to fully animated scene storyboard.</p>
                 </div>
 
                 <div class="glass-panel p-6 rounded-2xl mb-6">
                     <div class="flex flex-col md:flex-row gap-4">
                         <div class="flex-1">
                             <label class="text-xs font-bold text-zinc-500 uppercase mb-2 block">Story Prompt</label>
-                            <textarea id="scene-prompt" rows="3" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-4 text-white placeholder-zinc-700 focus:outline-none focus:border-violet-500 resize-none" placeholder="A cyberpunk samurai standing in rain, neon lights reflecting on katana, looking at a hologram..."></textarea>
+                            <textarea id="scene-prompt" rows="3" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-4 text-white placeholder-zinc-700 focus:outline-none focus:border-violet-500 resize-none" placeholder="A cyberpunk samurai standing in rain, neon lights reflecting on katana..."></textarea>
                         </div>
                         <div class="w-full md:w-64 flex flex-col gap-2">
                             <label class="text-xs font-bold text-zinc-500 uppercase mb-2 block">Settings</label>
                             <div class="flex items-center gap-2 p-2 bg-zinc-900 rounded-lg border border-zinc-800">
                                 <input type="checkbox" checked class="accent-violet-600">
-                                <span class="text-xs text-zinc-400">Auto-Captions</span>
+                                <span class="text-xs text-zinc-400">Wide Shot</span>
                             </div>
                             <div class="flex items-center gap-2 p-2 bg-zinc-900 rounded-lg border border-zinc-800">
                                 <input type="checkbox" checked class="accent-violet-600">
-                                <span class="text-xs text-zinc-400">Gen-Voiceover</span>
+                                <span class="text-xs text-zinc-400">Action Shot</span>
                             </div>
-                            <button onclick="generateScene()" id="scene-btn" class="flex-1 bg-white text-black font-bold rounded-lg hover:bg-zinc-200 transition-colors">Generate Scene</button>
+                            <button onclick="generateScene()" id="scene-btn" class="flex-1 bg-white text-black font-bold rounded-lg hover:bg-zinc-200 transition-colors">Generate Storyboard</button>
                         </div>
                     </div>
                 </div>
 
-                <div id="scene-timeline" class="h-64 glass-panel rounded-2xl border border-zinc-800 relative hidden">
-                    <div class="absolute inset-0 flex items-center justify-center" id="scene-loading">
-                        <div class="animate-pulse text-violet-500 font-mono text-sm">GENERATING ASSETS...</div>
-                    </div>
-                    <div id="scene-preview" class="hidden w-full h-full relative overflow-hidden">
-                        <!-- Simulated Timeline Visual -->
-                        <div class="absolute top-0 left-0 w-full h-8 border-b border-zinc-800 flex items-end px-2 opacity-30 bg-zinc-900"></div>
-                        <div class="p-8 flex items-center justify-center h-full">
-                            <div class="text-center group">
-                                <i onclick="togglePlayback(this)" data-lucide="play-circle" class="w-12 h-12 text-white mx-auto mb-2 opacity-80 hover:opacity-100 cursor-pointer transition-transform hover:scale-110"></i>
-                                <p class="text-xs text-zinc-500 font-mono">SCENE_001_FINAL.mp4</p>
-                            </div>
-                        </div>
-                    </div>
+                <!-- Scene Results Area -->
+                <div id="scene-results" class="hidden grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- Images will be injected here -->
+                </div>
+                
+                <div id="scene-loading" class="hidden h-64 glass-panel rounded-2xl border border-zinc-800 flex flex-col items-center justify-center">
+                    <div class="animate-spin w-8 h-8 border-2 border-violet-600 border-t-transparent rounded-full mb-4"></div>
+                    <div class="animate-pulse text-violet-500 font-mono text-sm">GENERATING STORYBOARD...</div>
                 </div>
             </div>
 
@@ -367,38 +390,42 @@
                     <p class="text-zinc-500">Motion tracking and Anime VFX layers.</p>
                 </div>
 
-                <div class="glass-panel rounded-2xl p-1 overflow-hidden">
-                    <div class="bg-black aspect-video relative flex items-center justify-center">
-                        <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1535905557558-afc4877a26fc?q=80&w=2574&auto=format&fit=crop')] bg-cover bg-center opacity-40 grayscale"></div>
+                <div class="glass-panel rounded-2xl p-1 overflow-hidden relative">
+                    <div class="bg-black aspect-video relative flex items-center justify-center overflow-hidden">
+                        <!-- Video Placeholder -->
+                        <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1535905557558-afc4877a26fc?q=80&w=2574&auto=format&fit=crop')] bg-cover bg-center opacity-60"></div>
+                        
+                        <!-- VFX Overlays (Toggled via JS) -->
+                        <div id="vfx-layer-aura" class="absolute inset-0 vfx-aura opacity-0 transition-opacity duration-300"></div>
+                        <div id="vfx-layer-eyes" class="absolute inset-0 vfx-eyes opacity-0 transition-opacity duration-300 mix-blend-screen"></div>
+                        <div id="vfx-layer-lines" class="absolute inset-0 vfx-speedlines opacity-0 transition-opacity duration-300"></div>
+                        <div id="vfx-layer-impact" class="absolute inset-0 vfx-impact opacity-0 transition-opacity duration-100"></div>
+
+                        <!-- HUD -->
                         <div class="relative z-10 text-center">
-                             <div class="w-16 h-16 border-2 border-violet-500 rounded-full animate-ping absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-50"></div>
                              <div class="w-24 h-24 border border-violet-500/30 rounded-full absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
-                             <p id="vfx-hud" class="font-mono text-violet-400 text-xs bg-black/50 px-2 py-1">TRACKING: FACE_ID_01</p>
+                             <p id="vfx-hud" class="font-mono text-violet-400 text-xs bg-black/50 px-2 py-1 mt-32">TRACKING: IDLE</p>
                         </div>
                         <div class="absolute top-4 left-4 text-[10px] font-mono text-zinc-500">REC 00:00:12:04</div>
                         <div class="absolute bottom-4 right-4 text-[10px] font-mono text-zinc-500">1080P 60FPS</div>
                     </div>
                     
                     <div class="p-6 grid grid-cols-2 md:grid-cols-4 gap-4 bg-zinc-900/50">
-                        <button onclick="toggleVFX(this, 'AURA')" class="vfx-btn p-4 bg-zinc-950 border border-zinc-800 rounded-xl hover:border-violet-500 hover:bg-zinc-900 transition-all text-left group">
+                        <button onclick="toggleVFX(this, 'aura')" class="vfx-btn p-4 bg-zinc-950 border border-zinc-800 rounded-xl hover:border-violet-500 hover:bg-zinc-900 transition-all text-left group">
                             <i data-lucide="zap" class="w-6 h-6 text-yellow-500 mb-2 group-hover:scale-110 transition-transform"></i>
-                            <div class="text-sm font-bold text-white">Super Saiyan Aura</div>
-                            <div class="text-[10px] text-zinc-500">Auto-Body Track</div>
+                            <div class="text-sm font-bold text-white">Super Aura</div>
                         </button>
-                        <button onclick="toggleVFX(this, 'EYES')" class="vfx-btn p-4 bg-zinc-950 border border-zinc-800 rounded-xl hover:border-violet-500 hover:bg-zinc-900 transition-all text-left group">
+                        <button onclick="toggleVFX(this, 'eyes')" class="vfx-btn p-4 bg-zinc-950 border border-zinc-800 rounded-xl hover:border-violet-500 hover:bg-zinc-900 transition-all text-left group">
                             <i data-lucide="eye" class="w-6 h-6 text-red-500 mb-2 group-hover:scale-110 transition-transform"></i>
-                            <div class="text-sm font-bold text-white">Sharingan Eyes</div>
-                            <div class="text-[10px] text-zinc-500">Face Track</div>
+                            <div class="text-sm font-bold text-white">Evil Eyes</div>
                         </button>
-                        <button onclick="toggleVFX(this, 'LINES')" class="vfx-btn p-4 bg-zinc-950 border border-zinc-800 rounded-xl hover:border-violet-500 hover:bg-zinc-900 transition-all text-left group">
+                        <button onclick="toggleVFX(this, 'lines')" class="vfx-btn p-4 bg-zinc-950 border border-zinc-800 rounded-xl hover:border-violet-500 hover:bg-zinc-900 transition-all text-left group">
                             <i data-lucide="wind" class="w-6 h-6 text-blue-400 mb-2 group-hover:scale-110 transition-transform"></i>
                             <div class="text-sm font-bold text-white">Speed Lines</div>
-                            <div class="text-[10px] text-zinc-500">Background</div>
                         </button>
-                        <button onclick="toggleVFX(this, 'IMPACT')" class="vfx-btn p-4 bg-zinc-950 border border-zinc-800 rounded-xl hover:border-violet-500 hover:bg-zinc-900 transition-all text-left group">
+                        <button onclick="toggleVFX(this, 'impact')" class="vfx-btn p-4 bg-zinc-950 border border-zinc-800 rounded-xl hover:border-violet-500 hover:bg-zinc-900 transition-all text-left group">
                             <i data-lucide="move" class="w-6 h-6 text-green-400 mb-2 group-hover:scale-110 transition-transform"></i>
-                            <div class="text-sm font-bold text-white">Impact Frames</div>
-                            <div class="text-[10px] text-zinc-500">Audio Trigger</div>
+                            <div class="text-sm font-bold text-white">Impact</div>
                         </button>
                     </div>
                 </div>
@@ -426,11 +453,14 @@
         // ==========================================
         const manualConfig = {
           apiKey: "AIzaSy" + "BnFNm4TK1nxKQVjg9AXXkrRoqs2AAO9yQ",
-          // ... rest of firebase config ...
+          authDomain: "ripzcreator-e.firebaseapp.com",
+          projectId: "ripzcreator-e",
+          storageBucket: "ripzcreator-e.firebasestorage.app",
+          messagingSenderId: "681432437212",
+          appId: "1:681432437212:web:e07ddb0ee8d5b53fa2ff19",
+          measurementId: "G-B74RK9PSZM"
         };
-        
-        // 👇 PASTE YOUR KEY HERE 👇
-        const GEMINI_API_KEY = "AIzaSyB2EusMCdsK2CeM1QefSY7PPUxl7wjd4QQ"; 
+        const GEMINI_API_KEY = "PASTE_YOUR_KEY_HERE"; // <--- PASTE GEMINI KEY HERE
 
         // --- Init ---
         let app, auth, db, user = null;
@@ -446,12 +476,8 @@
 
         // --- Navigation Logic ---
         window.switchView = (viewId) => {
-            // Hide all views
             document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
-            // Show selected
             document.getElementById(`view-${viewId}`).classList.remove('hidden');
-            
-            // Update Sidebar Active State
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 btn.classList.remove('bg-violet-600/20', 'text-violet-300', 'border', 'border-violet-600/50');
                 btn.classList.add('text-zinc-400');
@@ -464,19 +490,16 @@
             if(window.innerWidth < 768) toggleSidebar();
         };
 
-        // --- Interactive Functions (Buttons Logic) ---
+        // --- Interactive Functions ---
         window.showToast = (msg, type = 'info') => {
             const box = document.getElementById('toast-box');
             const txt = document.getElementById('toast-text');
             const icon = document.getElementById('toast-icon');
-            
             txt.innerText = msg;
             box.classList.remove('hidden');
-            
-            // Icon logic can be expanded
-            if(type === 'success') icon.style.color = '#4ade80'; // green
-            else icon.style.color = '#a78bfa'; // violet
-
+            if(type === 'success') icon.style.color = '#4ade80';
+            else if(type === 'error') icon.style.color = '#ef4444'; 
+            else icon.style.color = '#a78bfa';
             setTimeout(() => box.classList.add('hidden'), 3000);
         };
 
@@ -484,104 +507,134 @@
             showToast("Starting Download... (Project.mp4)", 'success');
         };
 
-        window.togglePlayback = (el) => {
-            // Check current icon
-            const isPlaying = el.getAttribute('data-lucide') === 'pause-circle';
-            
-            if (isPlaying) {
-                // Pause it
-                el.setAttribute('data-lucide', 'play-circle');
-                showToast("Preview Paused");
-            } else {
-                // Play it
-                el.setAttribute('data-lucide', 'pause-circle');
-                showToast("Playing Preview...");
-            }
-            lucide.createIcons();
-        };
-
         // Asset Lab Logic
         let selectedAssetType = 'Character';
         window.selectAssetType = (el, type) => {
             selectedAssetType = type;
-            // Reset styles
             document.querySelectorAll('.asset-btn').forEach(b => {
                 b.classList.remove('bg-violet-600', 'text-white', 'border-violet-500');
                 b.classList.add('bg-zinc-900', 'text-zinc-400', 'border-zinc-800');
             });
-            // Set active
             el.classList.remove('bg-zinc-900', 'text-zinc-400', 'border-zinc-800');
             el.classList.add('bg-violet-600', 'text-white', 'border-violet-500');
         };
 
-        // --- UPDATED: FREE AI GENERATOR (Pollinations.ai) ---
         window.generateAsset = async () => {
             const prompt = document.getElementById('asset-prompt').value;
             const btn = document.getElementById('asset-gen-btn');
             const placeholder = document.getElementById('asset-placeholder');
             const result = document.getElementById('asset-result');
-            const imagePreview = result.querySelector('.absolute.inset-0'); // Select the background div
+            const imagePreview = result.querySelector('.absolute.inset-0'); 
             
             if(!prompt) { showToast("Please describe the asset first.", 'error'); return; }
             
             btn.disabled = true;
-            btn.innerText = "Generating (Free)...";
+            btn.innerText = "Generating...";
             
-            // 1. Construct the Free API URL
-            // We add "anime style" automatically to ensure it fits your app's theme
-            const seed = Math.floor(Math.random() * 1000000); // Random seed for new results every time
+            const seed = Math.floor(Math.random() * 1000000);
             const finalPrompt = encodeURIComponent(`${prompt}, ${selectedAssetType}, anime style, high quality, 8k, vivid lighting`);
             const imageUrl = `https://image.pollinations.ai/prompt/${finalPrompt}?width=1280&height=720&seed=${seed}&nologo=true&model=flux`;
 
             try {
-                // 2. Pre-load image to ensure it's ready before showing
                 const img = new Image();
                 img.src = imageUrl;
-                
                 img.onload = () => {
-                    // 3. Show Result
                     placeholder.classList.add('hidden');
                     result.classList.remove('hidden');
-                    
                     document.getElementById('asset-title').innerText = selectedAssetType;
                     document.getElementById('asset-desc').innerText = prompt;
-                    
-                    // Apply image as background
                     imagePreview.style.background = `url(${imageUrl})`;
                     imagePreview.style.backgroundSize = "cover";
                     imagePreview.style.backgroundPosition = "center";
-                    
                     btn.disabled = false;
                     btn.innerText = "Generate";
-                    showToast("Asset Generated Successfully!", 'success');
+                    showToast("Asset Generated!", 'success');
                 };
-
-                img.onerror = () => {
-                    throw new Error("Image failed to load from API.");
-                };
-
             } catch (error) {
-                console.error(error);
-                showToast("Generation Failed. Try again.", 'error');
+                showToast("Generation Failed.", 'error');
                 btn.disabled = false;
                 btn.innerText = "Generate";
             }
         };
 
-        // VFX Logic
+        // --- NEW: Scene Builder Logic (Real Multi-Shot) ---
+        window.generateScene = async () => {
+            const prompt = document.getElementById('scene-prompt').value;
+            const btn = document.getElementById('scene-btn');
+            const loading = document.getElementById('scene-loading');
+            const results = document.getElementById('scene-results');
+            
+            if(!prompt) { showToast("Describe your scene first.", 'error'); return; }
+            
+            btn.disabled = true;
+            loading.classList.remove('hidden');
+            results.classList.add('hidden');
+            
+            const shots = [
+                { type: "Wide Shot", detail: "cinematic establishing shot" },
+                { type: "Action Shot", detail: "dynamic angle, motion blur" },
+                { type: "Close Up", detail: "intense emotion, detailed eyes" }
+            ];
+            
+            let html = '';
+            
+            // We use Promise.all to fetch 3 images in parallel
+            const imagePromises = shots.map(async (shot) => {
+                const seed = Math.floor(Math.random() * 1000000);
+                const p = encodeURIComponent(`${prompt}, ${shot.type}, ${shot.detail}, anime style, 8k`);
+                const url = `https://image.pollinations.ai/prompt/${p}?width=800&height=450&seed=${seed}&nologo=true&model=flux`;
+                
+                // Preload to ensure validity
+                await new Promise((resolve) => {
+                    const img = new Image();
+                    img.src = url;
+                    img.onload = resolve;
+                });
+                
+                return `
+                    <div class="glass-panel p-2 rounded-xl group relative overflow-hidden">
+                        <div class="aspect-video bg-black rounded-lg bg-cover bg-center" style="background-image: url('${url}')"></div>
+                        <div class="absolute bottom-2 left-2 bg-black/60 px-2 py-1 rounded text-[10px] text-white font-bold">${shot.type.toUpperCase()}</div>
+                    </div>
+                `;
+            });
+
+            try {
+                const resultCards = await Promise.all(imagePromises);
+                results.innerHTML = resultCards.join('');
+                
+                loading.classList.add('hidden');
+                results.classList.remove('hidden');
+                showToast("Storyboard Created!", 'success');
+            } catch(e) {
+                showToast("Scene Gen Failed", 'error');
+                loading.classList.add('hidden');
+            } finally {
+                btn.disabled = false;
+            }
+        };
+
+        // --- NEW: VFX Interactive Logic ---
         window.toggleVFX = (el, effectName) => {
-            // Reset all buttons visual state
+            // 1. Update UI Buttons
             document.querySelectorAll('.vfx-btn').forEach(b => {
                 b.classList.remove('border-violet-500', 'bg-zinc-900');
                 b.classList.add('border-zinc-800', 'bg-zinc-950');
             });
-            // Activate clicked
             el.classList.remove('border-zinc-800', 'bg-zinc-950');
             el.classList.add('border-violet-500', 'bg-zinc-900');
             
-            // Update HUD
-            document.getElementById('vfx-hud').innerText = `ACTIVE FX: ${effectName}`;
-            showToast(`${effectName} Effect Applied`);
+            // 2. Hide all layers first
+            ['aura', 'eyes', 'lines', 'impact'].forEach(fx => {
+                document.getElementById(`vfx-layer-${fx}`).classList.add('opacity-0');
+            });
+            
+            // 3. Show selected layer
+            const layer = document.getElementById(`vfx-layer-${effectName}`);
+            if(layer) layer.classList.remove('opacity-0');
+            
+            document.getElementById('vfx-hud').innerText = `ACTIVE FX: ${effectName.toUpperCase()}`;
+            showToast(`${effectName.toUpperCase()} Effect Applied`, 'success');
         };
 
 
@@ -640,27 +693,65 @@
             document.getElementById('progress-bar').style.width = '0%';
             document.getElementById('terminal-log').innerHTML = '> Init AI Core...<br>';
         };
-        
-        // --- SCENE BUILDER SIMULATION ---
-        window.generateScene = () => {
-             const btn = document.getElementById('scene-btn');
-             const timeline = document.getElementById('scene-timeline');
-             const loading = document.getElementById('scene-loading');
-             const preview = document.getElementById('scene-preview');
-             
-             btn.disabled = true;
-             btn.innerText = "Processing...";
-             timeline.classList.remove('hidden');
-             loading.classList.remove('hidden');
-             preview.classList.add('hidden');
 
-             setTimeout(() => {
-                 loading.classList.add('hidden');
-                 preview.classList.remove('hidden');
-                 btn.disabled = false;
-                 btn.innerText = "Generate Scene";
-             }, 2500);
+        // --- Shared Logic ---
+        window.toggleSidebar = () => {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
         };
+
+        window.copyText = (text) => {
+            const temp = document.createElement("textarea");
+            temp.value = text;
+            document.body.appendChild(temp);
+            temp.select();
+            document.execCommand("copy");
+            document.body.removeChild(temp);
+            showToast("Copied to Clipboard");
+        };
+        
+        window.resetCreator = () => switchView('script');
+        
+        window.showError = (msg) => {
+            showToast(msg, 'error');
+        };
+
+        // --- Auth & Listeners ---
+        window.handleEmailAuth = async (mode) => {
+            const e = document.getElementById('email-input').value;
+            const p = document.getElementById('password-input').value;
+            if(!auth) return;
+            try {
+                if (mode === 'signup') await createUserWithEmailAndPassword(auth, email, password);
+                else await signInWithEmailAndPassword(auth, email, password);
+            } catch (e) { showError(e.message); }
+        };
+
+        window.handleGuestLogin = async () => {
+            if(!auth) { user = {uid:'demo', isAnonymous:true}; updateAuthUI(); return; }
+            try { await signInAnonymously(auth); } 
+            catch (e) { 
+                if(e.code.includes('admin-restricted')) { user = {uid:'demo', isAnonymous:true}; updateAuthUI(); return; }
+                showError(e.message);
+            }
+        };
+
+        window.handleSignOut = () => { if(auth) signOut(auth); else window.location.reload(); };
+
+        function updateAuthUI() {
+            document.getElementById('loading-screen').classList.add('hidden');
+            if(user) {
+                document.getElementById('login-view').classList.add('hidden');
+                document.getElementById('user-email').innerText = user.email || "Guest User";
+                document.getElementById('user-avatar').innerText = (user.email||'G').substring(0,2).toUpperCase();
+                if(auth && db) subscribeHistory();
+            } else {
+                document.getElementById('login-view').classList.remove('hidden');
+                if(!auth) document.getElementById('setup-warning').classList.remove('hidden');
+            }
+        }
 
         // --- Existing Script Logic (Preserved) ---
         window.generateContent = async () => {
@@ -720,7 +811,6 @@
 
                 renderResults(content);
                 
-                // Save to DB
                 if (user && auth && db && user.uid !== 'demo-user') {
                     addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'projects'), {
                         topic,
@@ -779,65 +869,6 @@
             `;
             container.classList.remove('hidden');
             lucide.createIcons();
-        }
-
-        // --- Shared Logic ---
-        window.toggleSidebar = () => {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('sidebar-overlay');
-            sidebar.classList.toggle('-translate-x-full');
-            overlay.classList.toggle('hidden');
-        };
-
-        window.copyText = (text) => {
-            const temp = document.createElement("textarea");
-            temp.value = text;
-            document.body.appendChild(temp);
-            temp.select();
-            document.execCommand("copy");
-            document.body.removeChild(temp);
-            showToast("Copied to Clipboard");
-        };
-        
-        window.resetCreator = () => switchView('script');
-        
-        window.showError = (msg) => {
-            showToast(msg, 'error');
-        };
-
-        // --- Auth & Listeners ---
-        window.handleEmailAuth = async (mode) => {
-            const e = document.getElementById('email-input').value;
-            const p = document.getElementById('password-input').value;
-            if(!auth) return;
-            try {
-                if (mode === 'signup') await createUserWithEmailAndPassword(auth, email, password);
-                else await signInWithEmailAndPassword(auth, email, password);
-            } catch (e) { showError(e.message); }
-        };
-
-        window.handleGuestLogin = async () => {
-            if(!auth) { user = {uid:'demo', isAnonymous:true}; updateAuthUI(); return; }
-            try { await signInAnonymously(auth); } 
-            catch (e) { 
-                if(e.code.includes('admin-restricted')) { user = {uid:'demo', isAnonymous:true}; updateAuthUI(); return; }
-                showError(e.message);
-            }
-        };
-
-        window.handleSignOut = () => { if(auth) signOut(auth); else window.location.reload(); };
-
-        function updateAuthUI() {
-            document.getElementById('loading-screen').classList.add('hidden');
-            if(user) {
-                document.getElementById('login-view').classList.add('hidden');
-                document.getElementById('user-email').innerText = user.email || "Guest User";
-                document.getElementById('user-avatar').innerText = (user.email||'G').substring(0,2).toUpperCase();
-                if(auth && db) subscribeHistory();
-            } else {
-                document.getElementById('login-view').classList.remove('hidden');
-                if(!auth) document.getElementById('setup-warning').classList.remove('hidden');
-            }
         }
 
         function subscribeHistory() {
