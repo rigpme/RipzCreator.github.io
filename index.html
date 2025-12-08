@@ -1,48 +1,38 @@
 <!-- 
-  NOVACUT AI - PREMIUM VIDEO EDITOR PROTOTYPE
+  RIPZCREATOR - AI PRODUCTION STUDIO
   
-  RUN INSTRUCTIONS:
-  1. Save this file as "novacut.html"
-  2. Open in Chrome, Edge, or Safari.
-  3. No server required. Runs locally.
-  
-  INTEGRATION NOTES:
-  - Search for "// TODO: API" to find where to insert backend calls (OpenAI, Runway, Replicate).
-  - Search for "localStorage" to see where data is persisted client-side.
+  [INSTRUCTIONS]
+  1. Save as "index.html".
+  2. Open in Chrome/Edge/Safari.
+  3. No server required. App starts at the Login Screen.
 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NovaCut AI | The Editor of the Future</title>
+<title>RipzCreator | AI Video Editor</title>
 
-<!-- External Icon Library (Lucide) - Essential for UI visuals -->
+<!-- Icons -->
 <script src="https://unpkg.com/lucide@latest"></script>
 
 <style>
-    /* === 1. DESIGN TOKEN SYSTEM === */
+    /* === 1. DESIGN SYSTEM === */
     :root {
-        /* Palette - Dark & Neon */
         --bg-deep: #050507;
-        --bg-surface: #0E0E11;
-        --bg-panel: rgba(20, 20, 23, 0.7);
+        --bg-panel: rgba(20, 20, 23, 0.75);
+        --bg-surface: #121214;
         
-        --border: rgba(255, 255, 255, 0.08);
-        --border-active: rgba(139, 92, 246, 0.4);
-        
-        --primary: #8b5cf6;       /* Violet */
-        --primary-glow: rgba(139, 92, 246, 0.5);
+        --primary: #7c3aed;       /* Violet */
+        --primary-glow: rgba(124, 58, 237, 0.5);
         --accent: #06b6d4;        /* Cyan */
-        --success: #10b981;       /* Green */
         
-        --text-main: #f4f4f5;
+        --text-main: #ffffff;
         --text-muted: #a1a1aa;
         
-        /* Effects */
+        --border: rgba(255, 255, 255, 0.08);
         --glass: blur(20px);
         --ease: cubic-bezier(0.23, 1, 0.32, 1);
-        --shadow-glow: 0 0 40px rgba(139, 92, 246, 0.15);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; outline: none; user-select: none; }
@@ -57,50 +47,51 @@
         flex-direction: column;
     }
 
-    /* === 2. UTILITY CLASSES === */
+    /* === 2. UTILITY & ANIMATION === */
     .hidden { display: none !important; }
     .flex { display: flex; }
     .flex-col { flex-direction: column; }
     .items-center { align-items: center; }
     .justify-between { justify-content: space-between; }
     .justify-center { justify-content: center; }
-    .gap-2 { gap: 0.5rem; }
-    .gap-4 { gap: 1rem; }
-    .grow { flex-grow: 1; }
     .w-full { width: 100%; }
+    .h-full { height: 100%; }
     
     .text-gradient {
-        background: linear-gradient(135deg, #c4b5fd, var(--primary), var(--accent));
+        background: linear-gradient(135deg, #ddd6fe, var(--primary), var(--accent));
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
     }
 
-    /* === 3. UI COMPONENTS === */
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-in { animation: fadeIn 0.6s var(--ease) forwards; }
+    
+    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+    .orb { position: absolute; border-radius: 50%; filter: blur(100px); opacity: 0.3; z-index: -1; pointer-events: none; }
+    .orb-1 { width: 500px; height: 500px; background: var(--primary); top: -10%; left: -10%; animation: float 10s ease-in-out infinite; }
+    .orb-2 { width: 400px; height: 400px; background: var(--accent); bottom: 10%; right: 10%; animation: float 12s ease-in-out infinite reverse; }
+
+    /* === 3. COMPONENTS === */
     .btn {
         background: rgba(255,255,255,0.03);
         border: 1px solid var(--border);
         color: var(--text-main);
-        padding: 0.6rem 1.2rem;
-        border-radius: 8px;
+        padding: 0.7rem 1.4rem;
+        border-radius: 10px;
         font-size: 0.9rem;
         font-weight: 500;
         cursor: pointer;
         transition: all 0.2s var(--ease);
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        position: relative;
-        overflow: hidden;
+        display: inline-flex; align-items: center; gap: 8px; justify-content: center;
     }
     .btn:hover { background: rgba(255,255,255,0.08); border-color: var(--text-muted); transform: translateY(-1px); }
     .btn:active { transform: scale(0.98); }
     
     .btn-primary {
-        background: var(--primary);
-        border-color: var(--primary);
-        box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+        background: var(--primary); border-color: var(--primary);
+        box-shadow: 0 0 20px rgba(124, 58, 237, 0.3);
     }
-    .btn-primary:hover { background: #7c3aed; box-shadow: 0 0 30px rgba(139, 92, 246, 0.5); }
+    .btn-primary:hover { background: #6d28d9; box-shadow: 0 0 30px rgba(124, 58, 237, 0.5); }
 
     .glass-panel {
         background: var(--bg-panel);
@@ -109,267 +100,142 @@
         border: 1px solid var(--border);
     }
 
-    .icon { width: 18px; height: 18px; stroke-width: 2; }
-
-    /* === 4. ANIMATIONS === */
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.4); } 50% { box-shadow: 0 0 0 10px rgba(139, 92, 246, 0); } }
-    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
-
-    .animate-fade { animation: fadeIn 0.5s var(--ease) forwards; }
-    .animate-pulse { animation: pulse-glow 2s infinite; }
-    
-    /* === 5. LANDING PAGE === */
-    #view-landing { height: 100%; overflow-y: auto; position: relative; }
-    
-    .landing-nav {
-        position: sticky; top: 0; z-index: 50;
-        padding: 1.2rem 2rem;
-        background: rgba(5,5,7,0.85);
-        backdrop-filter: blur(12px);
-        border-bottom: 1px solid var(--border);
+    .input-box {
+        width: 100%; background: #000; border: 1px solid var(--border);
+        padding: 12px; border-radius: 8px; color: white; margin-bottom: 12px;
+        font-size: 0.9rem; transition: border-color 0.2s;
     }
-    
-    .hero {
-        min-height: 90vh;
-        display: flex; flex-direction: column; align-items: center; justify-content: center;
-        text-align: center; padding: 2rem; position: relative; overflow: hidden;
-    }
-    
-    /* Animated Background Orbs */
-    .orb { position: absolute; border-radius: 50%; filter: blur(100px); opacity: 0.3; z-index: -1; }
-    .orb-1 { width: 500px; height: 500px; background: var(--primary); top: -10%; left: -10%; animation: float 10s ease-in-out infinite; }
-    .orb-2 { width: 400px; height: 400px; background: var(--accent); bottom: 10%; right: 10%; animation: float 12s ease-in-out infinite reverse; }
+    .input-box:focus { border-color: var(--primary); }
 
-    .mockup-ui {
-        width: 80%; max-width: 1100px; height: 500px;
-        background: var(--bg-surface);
-        border: 1px solid var(--border); border-bottom: none;
-        border-radius: 12px 12px 0 0;
-        box-shadow: 0 -20px 80px rgba(0,0,0,0.6);
-        margin-top: 4rem; position: relative;
-        display: flex; flex-direction: column;
+    /* === VIEWS === */
+    
+    /* 1. Login View (Restored to "Picture Above" Style) */
+    #view-login {
+        height: 100%; display: flex; align-items: center; justify-content: center;
+        position: relative;
     }
-    .mockup-ui::after {
-        content: ''; position: absolute; inset: 0;
-        background: linear-gradient(to bottom, transparent 40%, var(--bg-deep));
-        pointer-events: none;
+    .login-card {
+        width: 100%; max-width: 420px;
+        padding: 2.5rem; border-radius: 24px;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.5);
     }
 
-    /* === 6. DASHBOARD === */
-    #view-dashboard { display: grid; grid-template-columns: 80px 1fr; height: 100%; }
-    
-    .sidebar {
-        background: var(--bg-surface);
-        border-right: 1px solid var(--border);
-        display: flex; flex-direction: column; align-items: center; padding: 1.5rem 0;
-        z-index: 20;
-    }
-    .nav-icon {
-        width: 44px; height: 44px; border-radius: 10px;
-        display: flex; align-items: center; justify-content: center;
-        color: var(--text-muted); cursor: pointer; transition: 0.2s;
-        margin-bottom: 0.5rem;
-    }
+    /* 2. Dashboard View */
+    #view-dashboard { height: 100%; display: grid; grid-template-columns: 80px 1fr; }
+    .sidebar { background: var(--bg-surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; padding: 1.5rem 0; z-index: 20; }
+    .nav-icon { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); cursor: pointer; transition: 0.2s; margin-bottom: 0.5rem; }
     .nav-icon:hover, .nav-icon.active { background: rgba(255,255,255,0.1); color: var(--text-main); }
     
-    .project-grid {
-        display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.5rem;
-    }
-    .project-card {
-        background: var(--bg-surface);
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        overflow: hidden;
-        cursor: pointer;
-        transition: 0.2s;
-    }
-    .project-card:hover { transform: translateY(-4px); border-color: var(--primary); }
-    .project-thumb { height: 140px; background: #000; display: flex; align-items: center; justify-content: center; color: #333; }
-    
-    /* === 7. EDITOR UI === */
-    #view-editor { display: grid; grid-template-rows: 50px 1fr 300px; grid-template-columns: 280px 1fr 320px; height: 100%; }
-    
+    .dash-main { padding: 3rem; overflow-y: auto; }
+    .project-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1.5rem; margin-top: 1.5rem; }
+    .project-card { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; cursor: pointer; transition: 0.2s; }
+    .project-card:hover { border-color: var(--primary); transform: translateY(-4px); }
+
+    /* 3. Editor View */
+    #view-editor { height: 100%; display: grid; grid-template-rows: 50px 1fr 280px; grid-template-columns: 280px 1fr 300px; }
     .top-bar { grid-column: 1 / -1; background: var(--bg-surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 1rem; justify-content: space-between; }
     
     .panel-left { grid-row: 2; background: var(--bg-surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
     .tool-tab { padding: 1rem; border-bottom: 1px solid var(--border); cursor: pointer; color: var(--text-muted); display: flex; align-items: center; gap: 10px; font-size: 0.9rem; }
     .tool-tab:hover, .tool-tab.active { background: rgba(255,255,255,0.03); color: var(--text-main); }
     .tool-tab.active { border-left: 2px solid var(--primary); }
-
-    .canvas-container { grid-row: 2; background: #000; display: flex; align-items: center; justify-content: center; position: relative; }
-    .video-frame {
-        width: 80%; aspect-ratio: 16/9;
-        background: #111;
-        border: 1px solid #333;
-        display: flex; align-items: center; justify-content: center;
-        color: #444; position: relative; overflow: hidden;
-    }
+    
+    .canvas-area { grid-row: 2; background: #000; display: flex; align-items: center; justify-content: center; position: relative; }
+    .video-frame { width: 80%; aspect-ratio: 16/9; background: #111; border: 1px solid #333; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; }
     
     .panel-right { grid-row: 2; background: var(--bg-surface); border-left: 1px solid var(--border); display: flex; flex-direction: column; transition: transform 0.3s; }
-    .panel-right.collapsed { transform: translateX(100%); margin-left: -320px; }
+    .panel-right.collapsed { transform: translateX(100%); margin-left: -300px; }
     
     .timeline { grid-row: 3; grid-column: 1 / -1; background: #121214; border-top: 1px solid var(--border); display: flex; flex-direction: column; }
-    .timeline-header { height: 40px; border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 1rem; justify-content: space-between; }
-    .tracks-area { flex: 1; overflow: auto; padding-top: 20px; position: relative; }
-    
     .track { height: 60px; display: flex; border-bottom: 1px solid #222; position: relative; }
-    .track-head { width: 100px; background: #18181b; border-right: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; color: #666; z-index: 10; }
+    .track-head { width: 100px; background: #18181b; border-right: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; color: #666; }
     .track-lane { flex: 1; position: relative; background-image: repeating-linear-gradient(90deg, #222 0, #222 1px, transparent 1px, transparent 100px); }
+    .clip { position: absolute; top: 10px; height: 40px; border-radius: 6px; background: #3b82f6; border: 1px solid rgba(255,255,255,0.2); cursor: grab; display: flex; align-items: center; padding: 0 10px; font-size: 0.75rem; }
+    .playhead { position: absolute; top: 0; bottom: 0; left: 300px; width: 2px; background: var(--accent); z-index: 20; pointer-events: none; }
+
+    /* VFX Layers */
+    .vfx-layer { position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 0.3s; }
+    .vfx-aura { box-shadow: inset 0 0 60px 30px rgba(250, 204, 21, 0.4); }
+    .vfx-eyes { background: radial-gradient(circle at 50% 45%, rgba(220, 38, 38, 0.8) 0%, transparent 10%), radial-gradient(circle at 55% 45%, rgba(220, 38, 38, 0.8) 0%, transparent 10%); }
     
-    /* Interactive Clip */
-    .clip {
-        position: absolute; top: 10px; height: 40px;
-        background: #3b82f6; border-radius: 6px;
-        border: 1px solid rgba(255,255,255,0.2);
-        cursor: grab;
-        display: flex; align-items: center; padding-left: 10px;
-        font-size: 0.75rem; font-weight: 500;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-    }
-    .clip:active { cursor: grabbing; border-color: #fff; z-index: 10; }
-    .clip.audio { background: #10b981; }
-    .clip.fx { background: var(--primary); }
-
-    .playhead {
-        position: absolute; top: 0; bottom: 0; width: 2px;
-        background: var(--accent); z-index: 20; pointer-events: none;
-        left: 300px;
-    }
-    .playhead::before {
-        content: ''; position: absolute; top: 0; left: -6px;
-        width: 14px; height: 14px; background: var(--accent);
-        transform: rotate(45deg); margin-top: -7px;
-    }
-
-    /* === TOAST NOTIFICATION === */
-    #toast {
-        position: fixed; bottom: 30px; right: 30px;
-        background: #fff; color: #000;
-        padding: 12px 24px; border-radius: 8px;
-        font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-        transform: translateY(100px); opacity: 0;
-        transition: 0.3s var(--ease); z-index: 9999;
-        display: flex; align-items: center; gap: 10px;
-    }
-    #toast.show { transform: translateY(0); opacity: 1; }
-
-    /* Input Field Styling */
-    .input-box {
-        width: 100%; background: #000; border: 1px solid var(--border);
-        padding: 10px; border-radius: 6px; color: white; margin-bottom: 10px;
-    }
-    .input-box:focus { border-color: var(--primary); }
-
+    /* Toast */
+    #toast { position: fixed; bottom: 20px; right: 20px; background: #fff; color: #000; padding: 12px 20px; border-radius: 8px; font-weight: 600; transform: translateY(100px); transition: 0.3s; z-index: 999; display: flex; align-items: center; gap: 8px; }
+    #toast.show { transform: translateY(0); }
 </style>
 </head>
 <body>
 
-<!-- === TOAST NOTIFICATION COMPONENT === -->
-<div id="toast">
-    <i data-lucide="check-circle" style="color:var(--success)"></i>
-    <span id="toast-msg">Action Successful</span>
-</div>
+<!-- TOAST -->
+<div id="toast"><i data-lucide="check-circle" style="color:var(--primary)"></i> <span id="toast-msg">Action Successful</span></div>
 
 <!-- ======================= -->
-<!-- VIEW 1: LANDING PAGE -->
+<!-- VIEW 1: LOGIN (START) -->
 <!-- ======================= -->
-<div id="view-landing" class="animate-fade">
+<div id="view-login" class="animate-in">
     <div class="orb orb-1"></div>
     <div class="orb orb-2"></div>
 
-    <nav class="landing-nav flex justify-between items-center">
-        <div class="flex items-center gap-2 font-bold text-xl">
-            <i data-lucide="aperture" style="color:var(--primary)"></i> NovaCut
+    <div class="login-card glass-panel">
+        <div class="flex justify-center mb-6">
+            <div style="width: 64px; height: 64px; background: linear-gradient(135deg, var(--primary), #4c1d95); border-radius: 16px; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(139, 92, 246, 0.4);">
+                <i data-lucide="aperture" style="width: 32px; height: 32px; color: white;"></i>
+            </div>
         </div>
-        <div class="flex gap-4">
-            <button class="btn" onclick="app.navTo('dashboard')">Login</button>
-            <button class="btn btn-primary" onclick="app.navTo('dashboard')">Join Beta</button>
-        </div>
-    </nav>
-
-    <div class="hero">
-        <h1 style="font-size: 4rem; font-weight: 800; line-height: 1.1; margin-bottom: 1rem;">
-            Edit Like a <span class="text-gradient">God.</span>
-        </h1>
-        <p style="font-size: 1.2rem; color: var(--text-muted); max-width: 600px; margin-bottom: 3rem;">
-            The first AI video editor built for anime creators. Auto-sync, VFX, and scene generation in one tap.
-        </p>
-        <div class="flex gap-4">
-            <button class="btn btn-primary animate-pulse" style="padding: 1rem 2rem; font-size: 1.1rem;" onclick="app.navTo('dashboard')">
-                <i data-lucide="zap"></i> Try the Editor
-            </button>
-            <button class="btn" style="padding: 1rem 2rem; font-size: 1.1rem;" onclick="app.toast('Demo video unavailable in offline mode')">
-                <i data-lucide="play-circle"></i> Watch Demo
-            </button>
+        
+        <div class="text-center mb-8">
+            <h1 style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;">Ripz<span class="text-gradient">Creator</span></h1>
+            <p style="color: var(--text-muted);">The AI Production Studio for Anime</p>
         </div>
 
-        <!-- Fake UI Mockup -->
-        <div class="mockup-ui">
-            <div style="padding: 12px; border-bottom: 1px solid var(--border); display: flex; gap: 8px;">
-                <div style="width: 10px; height: 10px; border-radius: 50%; background: #ff5f57;"></div>
-                <div style="width: 10px; height: 10px; border-radius: 50%; background: #febc2e;"></div>
-                <div style="width: 10px; height: 10px; border-radius: 50%; background: #28c840;"></div>
+        <div id="auth-form">
+            <input type="email" id="email" placeholder="Email Address" class="input-box">
+            <input type="password" id="password" placeholder="Password" class="input-box">
+            
+            <div class="flex gap-2 mb-4">
+                <button class="btn w-full" onclick="app.handleAuth('signin')">Sign In</button>
+                <button class="btn btn-primary w-full" onclick="app.handleAuth('signup')">Sign Up</button>
             </div>
-            <div class="flex grow">
-                <div style="width: 60px; border-right: 1px solid var(--border);"></div>
-                <div class="grow flex items-center justify-center text-muted">
-                    <span style="opacity:0.3; font-family: monospace;">[ AI PREVIEW ENGINE ]</span>
-                </div>
-                <div style="width: 200px; border-left: 1px solid var(--border);"></div>
+            
+            <div style="position: relative; text-align: center; margin: 1.5rem 0;">
+                <div style="height: 1px; background: var(--border); position: absolute; top: 50%; left: 0; right: 0;"></div>
+                <span style="background: var(--bg-surface); padding: 0 10px; position: relative; color: var(--text-muted); font-size: 0.8rem;">OR</span>
             </div>
-            <div style="height: 100px; border-top: 1px solid var(--border); background: rgba(255,255,255,0.02);"></div>
+
+            <button class="btn w-full" style="background: transparent; border-style: dashed;" onclick="app.handleAuth('guest')">
+                Continue as Guest
+            </button>
+            
+            <p id="login-error" style="color: #ef4444; font-size: 0.85rem; margin-top: 1rem; text-align: center; min-height: 20px;"></p>
         </div>
     </div>
-
-    <!-- Feature Cards -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; padding: 4rem 10%;">
-        <div class="glass-panel p-8 rounded-xl">
-            <i data-lucide="scissors" style="color:var(--accent); width: 32px; height: 32px; margin-bottom: 1rem;"></i>
-            <h3>Auto-Edit Engine</h3>
-            <p style="color:var(--text-muted); margin-top:0.5rem;">Upload raw footage and let AI trim silence, fix color, and stabilize instantly.</p>
-        </div>
-        <div class="glass-panel p-8 rounded-xl">
-            <i data-lucide="activity" style="color:var(--primary); width: 32px; height: 32px; margin-bottom: 1rem;"></i>
-            <h3>Beat-Sync</h3>
-            <p style="color:var(--text-muted); margin-top:0.5rem;">Your cuts automatically align to the music BPM. No manual shifting required.</p>
-        </div>
-        <div class="glass-panel p-8 rounded-xl">
-            <i data-lucide="type" style="color:#f472b6; width: 32px; height: 32px; margin-bottom: 1rem;"></i>
-            <h3>Anime Captions</h3>
-            <p style="color:var(--text-muted); margin-top:0.5rem;">Generate karaoke-style animated captions with one click.</p>
-        </div>
+    
+    <div style="position: absolute; bottom: 20px; color: var(--text-muted); font-size: 0.8rem;">
+        v2.4.0 • Secure Firebase Connection
     </div>
-
-    <footer style="padding: 4rem; text-align: center; background: #000; border-top: 1px solid var(--border);">
-        <h2>Ready to create?</h2>
-        <div class="flex justify-center gap-2 mt-4">
-            <input type="email" placeholder="enter@email.com" class="input-box" style="width: 300px; margin:0;">
-            <button class="btn btn-primary" onclick="app.toast('Welcome to the Waitlist!')">Get Access</button>
-        </div>
-    </footer>
 </div>
 
 <!-- ======================= -->
 <!-- VIEW 2: DASHBOARD -->
 <!-- ======================= -->
-<div id="view-dashboard" class="hidden animate-fade">
-    <nav class="sidebar">
-        <div style="margin-bottom: 2rem;">
+<div id="view-dashboard" class="hidden animate-in">
+    <aside class="sidebar">
+        <!-- LOGO (Home) -->
+        <div style="margin-bottom: 2rem; cursor: pointer;" onclick="app.logout()">
             <i data-lucide="aperture" style="width: 32px; height: 32px; color: var(--primary);"></i>
         </div>
+        
         <div class="nav-icon active"><i data-lucide="layout-grid"></i></div>
         <div class="nav-icon"><i data-lucide="folder"></i></div>
         <div class="nav-icon"><i data-lucide="users"></i></div>
         <div class="nav-icon" style="margin-top: auto;"><i data-lucide="settings"></i></div>
-        <div class="nav-icon" onclick="app.navTo('landing')"><i data-lucide="log-out"></i></div>
-    </nav>
+        <div class="nav-icon" onclick="app.logout()"><i data-lucide="log-out"></i></div>
+    </aside>
 
-    <div style="padding: 3rem; overflow-y: auto;">
+    <main class="dash-main">
         <header class="flex justify-between items-center mb-8">
             <div>
-                <h1 style="font-size: 2rem; font-weight: 700;">Welcome Back, <span class="text-gradient">Ripz</span> 👋</h1>
-                <p style="color: var(--text-muted);">You have 3 active projects.</p>
+                <h1 style="font-size: 2rem; font-weight: 700;">Welcome Back, <span id="user-display" class="text-gradient">Creator</span> 👋</h1>
+                <p style="color: var(--text-muted);">Ready to edit like a god?</p>
             </div>
             <button class="btn btn-primary" onclick="app.createProject()">
                 <i data-lucide="plus"></i> New Project
@@ -379,176 +245,157 @@
         <h3 style="color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem;">Recent Projects</h3>
         
         <div id="project-list" class="project-grid">
-            <!-- Projects injected via JS -->
+            <!-- JS Injected -->
         </div>
-    </div>
+    </main>
 </div>
 
 <!-- ======================= -->
 <!-- VIEW 3: EDITOR -->
 <!-- ======================= -->
-<div id="view-editor" class="hidden animate-fade">
-    <!-- Top Bar -->
+<div id="view-editor" class="hidden animate-in">
+    <!-- Header -->
     <header class="top-bar">
         <div class="flex items-center gap-4">
             <button class="btn" style="padding: 6px;" onclick="app.navTo('dashboard')"><i data-lucide="chevron-left"></i></button>
-            <div>
-                <div style="font-weight: 600; font-size: 0.9rem;" id="project-title-display">Untitled Project</div>
-                <div style="font-size: 0.7rem; color: var(--text-muted);">Saved locally • 1080p</div>
-            </div>
-        </div>
-        <div class="flex gap-2 bg-black p-1 rounded-lg border border-white/10">
-            <button class="btn" style="border:none; padding: 4px 12px; font-size: 0.8rem; background: var(--bg-surface);">Edit</button>
-            <button class="btn" style="border:none; padding: 4px 12px; font-size: 0.8rem; background: transparent; color: #666;">Color</button>
-            <button class="btn" style="border:none; padding: 4px 12px; font-size: 0.8rem; background: transparent; color: #666;">Audio</button>
+            <div style="font-weight: 600;" id="project-title-display">Untitled Project</div>
         </div>
         <div class="flex gap-2">
-            <button class="btn"><i data-lucide="share-2" style="width: 14px;"></i></button>
-            <button class="btn btn-primary" onclick="app.toast('Rendering Video... (Simulated)')">Export</button>
+            <button class="btn btn-primary" onclick="app.toast('Project Exported!')">Export</button>
         </div>
     </header>
 
-    <!-- Left Sidebar -->
+    <!-- Left -->
     <aside class="panel-left">
         <div class="tool-tab active" onclick="app.toast('Media Library')"><i data-lucide="film"></i> Media</div>
         <div class="tool-tab" onclick="app.toast('Audio Library')"><i data-lucide="music"></i> Audio</div>
         <div class="tool-tab" onclick="app.toast('Text Tools')"><i data-lucide="type"></i> Text</div>
-        <div class="tool-tab" onclick="app.toast('Transitions')"><i data-lucide="move-horizontal"></i> Transitions</div>
-        <div class="tool-tab" style="margin-top: auto; border-top: 1px solid var(--border); color: var(--accent);" onclick="app.toggleAI()">
+        <div class="tool-tab" style="color:var(--accent); border-top:1px solid var(--border); margin-top:auto;" onclick="app.toggleAI()">
             <i data-lucide="sparkles"></i> AI Tools
         </div>
         
-        <!-- Media List -->
-        <div style="padding: 1rem; overflow-y: auto;">
+        <!-- Asset List -->
+        <div style="padding: 1rem; overflow-y: auto; flex: 1;">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                 <div class="btn" style="height: 80px; flex-direction: column; justify-content: center; font-size: 0.7rem; border-style: dashed;">
                     <i data-lucide="upload"></i> Upload
                 </div>
                 <div class="btn" style="height: 80px; flex-direction: column; justify-content: flex-end; align-items: start; font-size: 0.7rem; background: #222; padding: 8px;">Clip_01.mp4</div>
                 <div class="btn" style="height: 80px; flex-direction: column; justify-content: flex-end; align-items: start; font-size: 0.7rem; background: #222; padding: 8px;">Intro.mov</div>
-                <div class="btn" style="height: 80px; flex-direction: column; justify-content: flex-end; align-items: start; font-size: 0.7rem; background: #222; padding: 8px;">Music.mp3</div>
             </div>
         </div>
     </aside>
 
-    <!-- Center Canvas -->
-    <section class="canvas-container">
+    <!-- Canvas -->
+    <section class="canvas-area">
         <div class="video-frame">
+            <!-- VFX Layers -->
+            <div id="vfx-aura" class="vfx-layer vfx-aura"></div>
+            <div id="vfx-eyes" class="vfx-layer vfx-eyes"></div>
+            
             <i data-lucide="play-circle" style="width: 64px; height: 64px; opacity: 0.2;"></i>
-            <div style="position: absolute; bottom: 10px; right: 10px; font-family: monospace; font-size: 0.7rem; color: #666;">
-                00:00:12:04 • 60FPS
-            </div>
-        </div>
-        <!-- Transport Controls -->
-        <div style="position: absolute; bottom: 20px; display: flex; gap: 1rem; background: rgba(0,0,0,0.8); padding: 8px 16px; border-radius: 20px; border: 1px solid var(--border);">
-            <i data-lucide="skip-back" class="icon" style="cursor: pointer;"></i>
-            <i data-lucide="play" class="icon" style="cursor: pointer; fill: white;"></i>
-            <i data-lucide="skip-forward" class="icon" style="cursor: pointer;"></i>
+            <div style="position: absolute; bottom: 10px; right: 10px; font-family: monospace; font-size: 0.7rem; color: #888;">1080p • 60FPS</div>
         </div>
     </section>
 
-    <!-- Right AI Panel (Slide-out) -->
-    <aside class="panel-right" id="ai-sidebar">
+    <!-- Right AI Panel -->
+    <aside class="panel-right" id="ai-panel">
         <div style="padding: 1rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between;">
             <h3>AI Copilot</h3>
-            <i data-lucide="x" class="icon" style="cursor: pointer;" onclick="app.toggleAI()"></i>
+            <i data-lucide="x" style="cursor: pointer;" onclick="app.toggleAI()"></i>
         </div>
         <div style="padding: 1rem; display: flex; flex-direction: column; gap: 1rem;">
-            
-            <!-- Tool 1 -->
-            <div class="glass-panel p-4 rounded-xl">
-                <div class="flex items-center gap-2 mb-2 font-bold">
-                    <i data-lucide="scissors" style="width: 16px;"></i> Auto Edit
-                </div>
-                <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px;">Remove silence & enhance lighting.</p>
+            <!-- Magic Edit -->
+            <div class="glass-panel p-4 rounded-xl" style="padding:1rem; border-radius:8px;">
+                <div class="flex items-center gap-2 mb-2 font-bold"><i data-lucide="scissors" style="width:16px;"></i> Auto Edit</div>
                 <button class="btn btn-primary w-full" onclick="app.runAI('Auto Editing')">Run Analysis</button>
             </div>
-
-            <!-- Tool 2 -->
-            <div class="glass-panel p-4 rounded-xl">
-                <div class="flex items-center gap-2 mb-2 font-bold">
-                    <i data-lucide="music" style="width: 16px;"></i> Beat Sync
+            <!-- VFX -->
+            <div class="glass-panel p-4 rounded-xl" style="padding:1rem; border-radius:8px;">
+                <div class="flex items-center gap-2 mb-2 font-bold"><i data-lucide="zap" style="width:16px;"></i> VFX Studio</div>
+                <div class="flex gap-2">
+                    <button class="btn w-full" onclick="app.toggleVFX('aura')">Aura</button>
+                    <button class="btn w-full" onclick="app.toggleVFX('eyes')">Eyes</button>
                 </div>
-                <button class="btn w-full" onclick="app.runAI('Beat Syncing')">Sync Timeline</button>
             </div>
-
-            <!-- Tool 3: Prompt -->
-            <div class="glass-panel p-4 rounded-xl">
-                <div class="flex items-center gap-2 mb-2 font-bold">
-                    <i data-lucide="wand-2" style="width: 16px;"></i> Scene Gen
-                </div>
-                <input type="text" class="input-box" id="ai-prompt" placeholder="E.g., Cyberpunk city rain...">
-                <!-- TODO: Add OpenAI API key here for real generation -->
-                <button class="btn w-full" onclick="app.runAI('Scene Generation')">Generate Assets</button>
+            <!-- Scene Gen -->
+            <div class="glass-panel p-4 rounded-xl" style="padding:1rem; border-radius:8px;">
+                <div class="flex items-center gap-2 mb-2 font-bold"><i data-lucide="wand-2" style="width:16px;"></i> Scene Gen</div>
+                <input type="text" id="ai-prompt" placeholder="E.g. Cyberpunk rain..." class="input-box">
+                <button class="btn w-full" onclick="app.generateScene()">Generate</button>
             </div>
-
+            <!-- Image Results -->
+            <div id="ai-results" class="hidden" style="margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 4px;"></div>
         </div>
     </aside>
 
-    <!-- Bottom Timeline -->
+    <!-- Timeline -->
     <footer class="timeline">
-        <div class="timeline-header">
+        <div style="height: 40px; border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 1rem; justify-content: space-between;">
             <div class="flex gap-4">
-                <i data-lucide="undo" class="icon text-muted" style="cursor: pointer;"></i>
-                <i data-lucide="redo" class="icon text-muted" style="cursor: pointer;"></i>
-                <div style="width: 1px; background: #333; height: 20px;"></div>
-                <i data-lucide="scissors" class="icon text-muted" style="cursor: pointer;"></i>
-                <i data-lucide="copy" class="icon text-muted" style="cursor: pointer;"></i>
+                <i data-lucide="undo" style="width:16px; color:#666;"></i>
+                <i data-lucide="redo" style="width:16px; color:#666;"></i>
+                <i data-lucide="scissors" style="width:16px; color:#666;"></i>
             </div>
-            <div class="flex items-center gap-2 text-xs text-muted">
-                <i data-lucide="minus" style="width: 14px;"></i>
-                <div style="width: 60px; height: 4px; background: #333; border-radius: 2px;"></div>
-                <i data-lucide="plus" style="width: 14px;"></i>
-            </div>
+            <div style="font-size:0.8rem; color:#666;">00:00:15:00</div>
         </div>
-
-        <div class="tracks-area" id="track-container">
-            <!-- Timeline Ruler -->
-            <div style="position: absolute; top: 0; left: 100px; right: 0; height: 20px; background-image: repeating-linear-gradient(90deg, #444 0, #444 1px, transparent 1px, transparent 20px);"></div>
-            
-            <!-- Track 1 -->
+        <div style="flex:1; position: relative; padding-top: 20px;">
+            <!-- Tracks -->
             <div class="track">
-                <div class="track-head"><i data-lucide="video" style="width: 14px; margin-right: 6px;"></i> V1</div>
+                <div class="track-head">Video 1</div>
                 <div class="track-lane">
                     <div class="clip" style="left: 20px; width: 150px;" onmousedown="app.dragStart(event, this)">Intro.mp4</div>
-                    <div class="clip" style="left: 180px; width: 200px;" onmousedown="app.dragStart(event, this)">Gameplay.mp4</div>
+                    <div class="clip" style="left: 180px; width: 200px;" onmousedown="app.dragStart(event, this)">Scene_1.mp4</div>
                 </div>
             </div>
-            <!-- Track 2 -->
             <div class="track">
-                <div class="track-head"><i data-lucide="type" style="width: 14px; margin-right: 6px;"></i> TXT</div>
+                <div class="track-head">Audio 1</div>
                 <div class="track-lane">
-                    <div class="clip fx" style="left: 180px; width: 100px;" onmousedown="app.dragStart(event, this)">Subtitle</div>
+                    <div class="clip" style="background:#10b981; left: 0px; width: 400px;" onmousedown="app.dragStart(event, this)">Music.mp3</div>
                 </div>
             </div>
-            <!-- Track 3 -->
-            <div class="track">
-                <div class="track-head"><i data-lucide="music" style="width: 14px; margin-right: 6px;"></i> A1</div>
-                <div class="track-lane">
-                    <div class="clip audio" style="left: 0; width: 400px;" onmousedown="app.dragStart(event, this)">BGM_Lofi.mp3</div>
-                </div>
-            </div>
-
-            <!-- Playhead -->
             <div class="playhead"></div>
         </div>
     </footer>
 </div>
 
-<script>
-    // === APPLICATION LOGIC ===
-    const app = {
-        state: {
-            currentView: 'landing',
-            projects: JSON.parse(localStorage.getItem('novacut_projects')) || [
-                { id: 1, name: 'Anime AMV - JJK', date: '2 hours ago' },
-                { id: 2, name: 'Tiktok Edit #42', date: '1 day ago' }
-            ]
-        },
+<!-- FIREBASE & APP LOGIC -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, signInAnonymously, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getFirestore, collection, addDoc, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    // --- 1. FIREBASE CONFIG ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyBnFNm4TK1nxKQVjg9AXXkrRoqs2AAO9yQ",
+      authDomain: "ripzcreator-e.firebaseapp.com",
+      projectId: "ripzcreator-e",
+      storageBucket: "ripzcreator-e.firebasestorage.app",
+      messagingSenderId: "681432437212",
+      appId: "1:681432437212:web:e07ddb0ee8d5b53fa2ff19",
+      measurementId: "G-B74RK9PSZM"
+    };
+
+    let auth, db;
+    try {
+        const app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
+        db = getFirestore(app);
+        console.log("Firebase initialized for RipzCreator");
+    } catch (e) {
+        console.warn("Firebase config error:", e);
+    }
+
+    // --- 2. APP LOGIC ---
+    window.app = {
+        user: null,
+        projects: JSON.parse(localStorage.getItem('ripz_projects')) || [
+            { id: 1, name: 'Anime AMV - JJK', date: '2h ago' },
+            { id: 2, name: 'TikTok Edit #42', date: '1d ago' }
+        ],
 
         init() {
             lucide.createIcons(); // Initialize Icons
-            
             // Check persistence
             if (localStorage.getItem('novacut_user')) {
                 this.navTo('dashboard');
@@ -564,43 +411,77 @@
                 this.renderProjects();
                 localStorage.setItem('novacut_user', 'true');
             }
-            if (viewId === 'editor') {
-                // Initialize editor state if needed
-            }
             lucide.createIcons();
         },
 
-        // Toast Notification
-        toast(msg) {
-            const el = document.getElementById('toast');
-            document.getElementById('toast-msg').innerText = msg;
-            el.classList.add('show');
-            setTimeout(() => el.classList.remove('show'), 3000);
+        // Auth
+        async handleAuth(mode) {
+            const errorEl = document.getElementById('login-error');
+            const email = document.getElementById('email').value;
+            const pass = document.getElementById('password').value;
+            errorEl.innerText = "";
+            
+            try {
+                if (mode === 'guest') {
+                    if (auth) await signInAnonymously(auth);
+                    else this.mockLogin('Guest');
+                } 
+                else if (mode === 'signin' || mode === 'signup') {
+                    if (!auth) throw new Error("Firebase not initialized");
+                    if (mode === 'signup') await createUserWithEmailAndPassword(auth, email, pass);
+                    else await signInWithEmailAndPassword(auth, email, pass);
+                }
+                
+                // Success logic handled by onAuthStateChanged
+            } catch (e) {
+                console.error(e);
+                errorEl.innerText = e.message;
+            }
         },
 
-        // Dashboard Logic
+        mockLogin(name) {
+            this.user = { email: name };
+            this.finishLogin();
+        },
+
+        finishLogin() {
+            const name = this.user.email ? this.user.email.split('@')[0] : 'Guest';
+            document.getElementById('user-display').innerText = name;
+            localStorage.setItem('novacut_user', 'true');
+            this.navTo('dashboard');
+        },
+
+        logout() {
+            if (auth) signOut(auth);
+            localStorage.removeItem('novacut_user');
+            this.user = null;
+            this.navTo('login');
+        },
+
+        // Projects
         renderProjects() {
             const list = document.getElementById('project-list');
             list.innerHTML = `
-                <div class="project-card" style="border-style: dashed; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted);" onclick="app.createProject()">
-                    <i data-lucide="plus" style="width: 32px; height: 32px; margin-bottom: 10px;"></i>
-                    <span>New Project</span>
+                <div class="project-card" style="border-style:dashed; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#666; height:150px;" onclick="app.createProject()">
+                    <i data-lucide="plus" style="margin-bottom:10px;"></i>
+                    <span>Create New</span>
                 </div>
             `;
             
-            this.state.projects.forEach(p => {
+            this.projects.forEach(p => {
                 const card = document.createElement('div');
                 card.className = 'project-card';
-                card.onclick = () => app.openProject(p.name);
+                card.style.height = '150px';
                 card.innerHTML = `
-                    <div class="project-thumb">
-                        <i data-lucide="film" style="opacity: 0.5;"></i>
+                    <div style="height:100px; background:#000; display:flex; align-items:center; justify-content:center;">
+                        <i data-lucide="film" style="opacity:0.3;"></i>
                     </div>
-                    <div style="padding: 12px;">
-                        <div style="font-weight: 600; font-size: 0.9rem; margin-bottom: 4px;">${p.name}</div>
-                        <div style="font-size: 0.75rem; color: var(--text-muted);">${p.date}</div>
+                    <div style="padding:10px;">
+                        <div style="font-weight:600; font-size:0.9rem;">${p.name}</div>
+                        <div style="font-size:0.7rem; color:#666;">${p.date}</div>
                     </div>
                 `;
+                card.onclick = () => app.openEditor(p.name);
                 list.appendChild(card);
             });
             lucide.createIcons();
@@ -609,73 +490,113 @@
         createProject() {
             const name = prompt("Project Name:", "Untitled");
             if(name) {
-                this.state.projects.unshift({ id: Date.now(), name, date: 'Just now' });
-                localStorage.setItem('novacut_projects', JSON.stringify(this.state.projects));
+                this.projects.unshift({ id: Date.now(), name, date: 'Just now' });
+                localStorage.setItem('ripz_projects', JSON.stringify(this.projects));
                 this.renderProjects();
-                this.openProject(name);
+                this.openEditor(name);
             }
         },
 
-        openProject(name) {
+        openEditor(name) {
             document.getElementById('project-title-display').innerText = name;
             this.navTo('editor');
         },
 
         // Editor Interactions
         toggleAI() {
-            const panel = document.getElementById('ai-sidebar');
-            panel.classList.toggle('collapsed');
+            document.getElementById('ai-panel').classList.toggle('collapsed');
         },
 
         runAI(task) {
-            // Placeholder for backend API call
-            // TODO: Replace with fetch() to OpenAI or Replicate
             const btn = event.target;
-            const originalText = btn.innerText;
-            
-            btn.disabled = true;
+            const original = btn.innerText;
             btn.innerText = "Processing...";
+            btn.disabled = true;
             
+            // Simulation
             setTimeout(() => {
+                btn.innerText = original;
                 btn.disabled = false;
-                btn.innerText = originalText;
-                this.toast(`${task} Complete!`);
+                this.toast(`${task} Completed!`);
                 
                 // Simulate adding a clip
-                const track = document.querySelector('.track-lane');
-                const clip = document.createElement('div');
-                clip.className = 'clip fx';
-                clip.innerText = 'AI Generated';
-                clip.style.left = '400px';
-                clip.style.width = '100px';
-                clip.onmousedown = (e) => app.dragStart(e, clip);
-                track.appendChild(clip);
+                if(task === 'Scene Generation') {
+                    const track = document.querySelector('.track-lane');
+                    const clip = document.createElement('div');
+                    clip.className = 'clip fx';
+                    clip.innerText = 'AI Scene';
+                    clip.style.left = '400px';
+                    clip.style.width = '100px';
+                    clip.onmousedown = (e) => app.dragStart(e, clip);
+                    track.appendChild(clip);
+                }
             }, 1500);
         },
 
-        // Drag & Drop Logic (Simplified)
+        toggleVFX(type) {
+            const el = document.getElementById(`vfx-${type}`);
+            const isActive = el.style.opacity === '1';
+            el.style.opacity = isActive ? '0' : '1';
+            this.toast(isActive ? `${type} Disabled` : `${type} Enabled`);
+        },
+
+        // FREE AI Scene Generation (Pollinations)
+        generateScene() {
+            const prompt = document.getElementById('ai-prompt').value;
+            if(!prompt) return this.toast("Please enter a prompt");
+            
+            const btn = event.target;
+            btn.innerText = "Generating...";
+            
+            // Generate 2 images
+            const container = document.getElementById('ai-results');
+            container.classList.remove('hidden');
+            container.innerHTML = '';
+            
+            [1, 2].forEach(i => {
+                const seed = Math.floor(Math.random() * 1000);
+                const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}, anime style?width=300&height=200&seed=${seed}&nologo=true`;
+                const img = document.createElement('img');
+                img.src = url;
+                img.style.width = '100%';
+                img.style.borderRadius = '6px';
+                container.appendChild(img);
+            });
+            
+            setTimeout(() => btn.innerText = "Generate", 2000);
+        },
+
+        toast(msg) {
+            const t = document.getElementById('toast');
+            t.querySelector('span').innerText = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3000);
+        },
+
+        // Drag Logic
         dragStart(e, el) {
             let startX = e.clientX;
             let startLeft = parseInt(el.style.left || 0);
-            
-            const onMouseMove = (moveEvent) => {
-                const dx = moveEvent.clientX - startX;
-                el.style.left = `${startLeft + dx}px`;
-            };
-            
-            const onMouseUp = () => {
-                document.removeEventListener('mousemove', onMouseMove);
-                document.removeEventListener('mouseup', onMouseUp);
-            };
-            
-            document.addEventListener('mousemove', onMouseMove);
-            document.addEventListener('mouseup', onMouseUp);
+            const onMove = (evt) => { el.style.left = `${startLeft + evt.clientX - startX}px`; };
+            const onUp = () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
+            document.addEventListener('mousemove', onMove);
+            document.addEventListener('mouseup', onUp);
         }
     };
 
-    // Boot
+    // Firebase Listener
+    if(auth) {
+        onAuthStateChanged(auth, (user) => {
+            if(user) {
+                app.user = user;
+                if(!document.getElementById('view-login').classList.contains('hidden')) {
+                    app.finishLogin();
+                }
+            }
+        });
+    }
+
     app.init();
 </script>
-
 </body>
 </html>
